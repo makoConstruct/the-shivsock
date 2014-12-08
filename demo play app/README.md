@@ -7,7 +7,7 @@ Shivsock is a symmetrical [websocket subprotocol](https://github.com/makoConstru
 
 * **entity subaddressing**. All messages are addressed to a particular entity on the server from a particular entity on the client. These entities may operate in complete isolation, their communications will never interfere with any others.
 
-* **batching**. If multiple messages are sent from the client at the same time, they will be stuck together and sent in the same TCP packet a few milliseconds later to save badnwidth.
+* **batching**. If multiple messages are sent from the client at the same time, they will be stuck together and sent in the same TCP packet a few milliseconds later to save bandwidth.
 
 * **no mediocre pub/sub**. Pub/sub overloads a standard with the wrong kind of features. I intend on providing sophisticated pub/sub features for Shivsock, but they will not be built *into* the shivsock protocol, they will be built *on top of it*.
 

@@ -6,7 +6,7 @@ Shivsock is a symmetrical websocket subprotocol supplying entity addressing, RPC
 
 * **entity subaddressing**. All messages are addressed to a particular entity on the server from a particular entity on the client. These entities may operate in complete isolation, their communications will never interfere with any others.
 
-* **batching**. If multiple messages are sent from the client at the same time, they will be stuck together and sent in the same TCP packet a few milliseconds later to save badnwidth.
+* **batching**. If multiple messages are sent from the client at the same time, they will be stuck together and sent in the same TCP packet a few milliseconds later to save bandwidth.
 
 * **no mediocre pub/sub**. Pub/sub overloads a standard with the wrong kind of features. I intend on providing sophisticated pub/sub features for Shivsock, but they will not be built *into* the shivsock protocol, they will be built *on top of it*.
 
@@ -36,11 +36,11 @@ A request through this channel, from our end, would then be `{to:<entity name>, 
 
 We would then expect `{to:<local entity name>, from:<entity name>, rp:<id>, o:<reply>}`
 
-If the to and from fields are not specified, a default value of `""` is assumed. Servers may wish to install a client-specific socket guard at `""`, it is not required that names have the same meaning between different clients, everyone's `""` may be different.
+If the `to` and `from` fields are not specified, a default value of `""` is assumed. Servers may wish to install a client-specific socket guard at `""`, it is not required that names have the same meaning between different clients, everyone's `""` may be different.
 
 If the target does not exist(or if you don't have permission to know about it): `{rp:<integer>, to:<local entity name>, from:<entity name>, no:"this entity does not exist"}`
 
-Or, if the transmission were to go wrong in some other way
+A `no` field in place of an `o` field denotes an error, and should cause the Promise of the query to fail.
 
 Request IDs only need to be unique among the request IDs issuing from their entity. The system must be able to deal with different entities using the same IDs at the same time.
 
