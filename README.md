@@ -21,7 +21,7 @@ browser side | shiver.js
 
 ##why do we need another protocol?
 
-To be honest, I'm not entirely sure we do. I'm not aware of a good alternative, but to be honest I just couldn't be bothered spending time reasearching the minutae of a raft of mostly inferiour protocol when I could just sit down, code it my way, and get exactly what I want with no bullshit. You know how it is. I'll update this section on the event that I learn that my way really is best.
+To be honest, I'm not entirely sure we do. I'm not aware of a good alternative, but to be honest I just couldn't be bothered spending time researching the minutae of a raft of mostly inferior protocols when I could just sit down, code it my way, and get exactly what I want with no bullshit. You know how it is. I'll update this section in the event that I'm ever able to articulate a position of superiority.
 
 ###spec
 Simple one way message: `{o:<payload>}`
