@@ -1,23 +1,27 @@
 #shivsock
 
-A json websocket protocol providing subaddressing/subsockets, RPC, and batching.
+Shivsock is a symmetrical websocket subprotocol supplying entity addressing, RPC, and batching.
 
-Happens to be symmetrical.
+* **Remote Procedure Calls**. You can query an entity and the shivsock API will provide you with an es6 Promise(or a shim) that allows your code to immediately start to discuss the asynchronous return value of the query.
+
+* **entity subaddressing**. All messages are addressed to a particular entity on the server from a particular entity on the client. These entities may operate in complete isolation, their communications will never interfere with any others.
+
+* **batching**. If multiple messages are sent from the client at the same time, they will be stuck together and sent in the same TCP packet a few milliseconds later to save badnwidth.
+
+* **no mediocre pub/sub**. Pub/sub overloads a standard with the wrong kind of features. I intend on providing sophisticated pub/sub features for Shivsock, but they will not be built *into* the shivsock protocol, they will be built *on top of it*.
+
+I believe these features make an ideal basis for complex web applications.
 
 ###Implementations
 
-language |
+language | coverage
 --- | ---
 scala | there is a play framework version, but porting to any other websocket hosts that use akka would be trivial.
 browser side | shiver.js
 
 ##why do we need another protocol?
 
-In summary: Directly addressing entities on a server is somehow a provision that no other framework provides. Meanwhile it is transparent to me that competing protocols' decisions to embed pub/sub into the expected API is mad.
-
-Entity Addressing: these other protocols do allow you to *request* an entity ID and use that to engage in direct communication, but the fact that this ID is provided by the protocol implementation rather than the server itself closes certain doors. Say you were engaged through a reverse proxy which wanted to switch your messages to another recipient, what then? Either your entity IDs would be meaningless on the other server or you'd have to get new entity IDs before resuming conversation. Do you enjoy writing reams of client code for edge cases? What about mailboxes? How can entities on the client side get the messages due of them if their ID changes every time the client refreshes the page? It does not make sense to have the protocol handling ID allocation.
-
-A whole lot of reactive applications need pub sub, but to put forth a system that only provides subscriptions as a pure function of a server and a text string is to insult the opportunity space. No app, not even your toy example chat applications, should settle for such a meager provision. I'm planning on building systems that enable clients to subscribe to intervals, to arbitrary expressions of set intersections and unions, properties of remote standard data structures, and full blown CRDTs, and I do not forsee defining an `emit` method.
+To be honest, I'm not entirely sure we do. I'm not aware of a good alternative, but to be honest I just couldn't be bothered spending time reasearching the minutae of a raft of mostly inferiour protocol when I could just sit down, code it my way, and get exactly what I want with no bullshit. You know how it is. I'll update this section on the event that I learn that my way really is best.
 
 ###spec
 Simple one way message: `{o:<payload>}`
