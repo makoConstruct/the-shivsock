@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>test play shivsock implementation</title>
+	<link rel="shortcut icon" href="DGFavicon.png"/>
+	<meta charset="utf-8">
+	<style type="text/css">
+		body{
+			margin: 0px;
+			background-color: black;
+			color: white;
+			font-family: monospace;
+		}
+		#commands, #feed {
+			position: fixed;
+			overflow: auto;
+			width: 50%;
+			height: 100%;
+		}
+		#commands{
+			left: 0%;
+			background-color: rgb(40,40,40);
+		}
+		#feed{
+			left:50%;
+		}
+		.item {
+		}
+		.error {
+			color: #FF5050;
+		}
+		.error:before{ content:'✕' }
+		.item:before{ padding-right: 4px; padding-left: 3px; color: rgb(70,70,70) }
+		.dim{ color: rgb(70,70,70) }
+		#commands > .item:hover {
+			background-color: rgb(70,70,70);
+			cursor: pointer;
+		}
+	</style>
+	<script type="text/javascript" src="@routes.Assets.at("javascripts/shiver.js")"></script>
+	<script type="text/javascript">
+		function makeItem(text){
+			var d = document.createElement('div')
+			if(text){
+				var content = document.createElement('span')
+				content.textContent = text
+				d.appendChild(content)
+			}
+			d.classList.add('item')
+			return d
+		}
+
+		function addCommand(text){
+			var commands = document.getElementById('commands')
+			var feed = document.getElementById('feed')
+			var d = makeItem(text)
+			var codeCall = eval("(function(){"+text+"})")
+			d.addEventListener('mousedown', function(ev){
+				try{
+					codeCall()
+				}catch(e){
+					var erd = makeItem(e.toString())
+					erd.classList.add('error')
+					feed.appendChild(erd)
+				}
+			})
+			commands.appendChild(d)
+		}
+		var commands = [
+			"intrepid.issue({says:'I BELIEVE'})",
+			"intrepid.issue({says:'I BELIEVE.'})",
+			"intrepid.issue({says:'Dragons are fake as shit.'})",
+			"intrepid.query({says:'Are dragons real?'})",
+			"intrepid.query({says:'I know that dragons are real. Let me talk to the dragon.'})",
+			"intrepid.query({says:'OPEN YOUR MOUTH DRAGON CAUSE I\\'M READY'}, 'NAGENDRA')",
+			"intrepid.query({says:'AAAAAAUGH!'}, 'NAGENDRA')",
+			"intrepid.query({says:'NAGENDRA'}, 'NAGENDRA')",
+			"intrepid.query({says:'Wow!'}, 'NAGENDRA')",
+			"intrepid.query({says:'Such.. beauty..'}, 'NAGENDRA')",
+			"intrepid.query({says:'AAAAAAUGH?'}, 'NAGENDRA')",
+			"intrepid.query({says:'Oh NAGENDRA. Would you like to eat this cow?'}, 'NAGENDRA')",
+			"intrepid.query({says:'There\\'s a cow here'}, 'NAGENDRA')",
+			"intrepid.query({says:'How can I appease you, NAGENDRA?'}, 'NAGENDRA')",
+			"intrepid.query({action:'kneels'}, 'NAGENDRA')",
+			"rooter.query({says:'I know that dragons are real. Let me talk to the dragon.'})",
+			"rooter.query({says:'NAGENDRA'}, 'NAGENDRA')",
+			"rooter.query({says:'How can I appease you, NAGENDRA?'}, 'NAGENDRA')"
+		]
+		document.addEventListener('DOMContentLoaded', function(){
+			commands.forEach(addCommand)
+		})
+		
+		var intrepid, rooter
+		
+		getConnectedShivSock('ws://localhost:9000/ws').then(function(shiverSock){
+			//we twist our local entities to make them log everything that passes through them
+			//prints a message to the 
+			function log(symbol, c, subject){
+				// 'incoming':'←',
+				// 'outgoing':'→',
+				// 'resolved':'↩',
+				// 'querying':'⇁',
+				// 'queryied':'↽',
+				// 'responding':'↪',
+				var d = makeItem()
+				var pre = document.createElement('span')
+				pre.classList.add('dim')
+				pre.textContent = symbol + ((subject && subject.name) || "")
+				d.appendChild(pre)
+				var post = document.createElement('span')
+				post.textContent = c.constructor == String ? c : JSON.stringify(c)
+				d.appendChild(post)
+				var feed = document.getElementById('feed')
+				feed.appendChild(d)
+				feed.scrollTop = feed.scrollHeight
+			}
+			function loggingEntity(name){
+				var se = shiverSock.newEntity({
+					name: name,
+					onQuery: function(o, from) {
+						log('↽', o, this)
+					},
+					onMessage: function(o, from) {
+						log('←', o, this)
+					}
+				})
+				//now serious twisting
+				se.issue = function(o){
+					log('→', o, this)
+					ShivEntity.prototype.issue.call(this, o)
+				}
+				se.query = function(o, to, through){
+					log('⇁', o, this)
+					var q = ShivEntity.prototype.query.call(this, o, to, through)
+					q.then(function(o){ log('↩', o, se) })
+					return q
+				}
+				return se
+			}
+			intrepid = loggingEntity('intrepid')
+			rooter = loggingEntity('rooter')
+		})
+		
+	</script>
+</head>
+<body>
+	<div id="commands"></div>
+	<div id="feed"></div>
+</body>
+</html>
