@@ -9,20 +9,19 @@ import akka.actor._
 import Shivsock._
 
 //usage example
-class KeeperOfSecretDragons extends ShivsockEntity with Actor{
+class KeeperOfSecretDragons extends ShivsockEntity{
 	val name = ""
 	var incredulity = 0
 	var clientKnowsAboutTheDragons = false
 	def response(says:String) = Json.obj("says"-> JsString(says))
-	def receive = { case o:JsObject => handlingAsEntity(o, sender) }
-	def takeClientStatement(r:JsValue, origin:ClientAddress){
+	def takeShivsockStatement(r:JsValue, origin:ClientAddress){
 		(r \ "says").asOpt[String].foreach {
 			case "Dragons are fake as shit." => incredulity += 1
 			case "I BELIEVE." => incredulity -= 1
 			case _=> {}
 		}
 	}
-	def takeClientQuery(r:JsValue, origin:ClientAddress):Future[JsValue] ={
+	def takeShivsockQuery(r:JsValue, origin:ClientAddress):Future[JsValue] ={
 		(r \ "says").asOpt[String] match{
 			case Some(str) => str match{
 				case "Are dragons real?" => Future.successful(response("No. All dragons are fake and there are no dragons here."))
@@ -41,15 +40,16 @@ class KeeperOfSecretDragons extends ShivsockEntity with Actor{
 	}
 	
 	val NAGENDRA:ActorRef = Shivsock.createNewEntity(classOf[GloriousDragon], "NAGENDRA")
+	
+	def receive = shivsockEntityReceive
 }
 
 
-class GloriousDragon(val name:String) extends ShivsockEntity with Actor{
+class GloriousDragon(val name:String) extends ShivsockEntity{
 	var impatience = 0
 	var currentlyWith: Option[ClientAddress] = None
 	def action(msg:String):JsObject = Json.obj("action"-> JsString(msg))
 	def says(msg:String):JsObject = Json.obj("says"-> JsString(msg))
-	def receive = { case o:JsObject => handlingAsEntity(o, sender) }
 	def boostImpatience(i:Int){
 		val wasWith = currentlyWith
 		for(js <- impatienceBoost(i); cad <- wasWith) message(cad, js)
@@ -80,7 +80,7 @@ class GloriousDragon(val name:String) extends ShivsockEntity with Actor{
 				boostImpatience(6)
 		}
 	}
-	def takeClientStatement(o:JsValue, origin:ClientAddress){
+	def takeShivsockStatement(o:JsValue, origin:ClientAddress){
 		currentlyWith.foreach { (cad)=>
 			if(cad equals origin)
 				(o \ "says").asOpt[String] match{
@@ -94,7 +94,7 @@ class GloriousDragon(val name:String) extends ShivsockEntity with Actor{
 				}
 		}
 	}
-	def takeClientQuery(o:JsValue, origin:ClientAddress):Future[JsValue] ={
+	def takeShivsockQuery(o:JsValue, origin:ClientAddress):Future[JsValue] ={
 		def maybeEmbrace ={
 			def embraced = {
 				embrace(origin)
@@ -153,4 +153,5 @@ class GloriousDragon(val name:String) extends ShivsockEntity with Actor{
 				maybeCall
 		}
 	}
+	def receive = shivsockEntityReceive
 }

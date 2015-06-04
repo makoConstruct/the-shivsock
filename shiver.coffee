@@ -26,12 +26,69 @@
 
 @timeoutSet = (t,f)-> setTimeout(f,t) #more readable. Especially in coffeescript
 
+_newelClassesAndChildren = (el, args)->
+	i = 0
+	while i < args.length and args[i].constructor == String
+		el.classList.add args[i]
+		i += 1
+	while i < args.length
+		el.appendChild args[i]
+		i += 1
+	el
+@newelNamed = (tag, id, args...)->
+	el = document.createElement tag
+	el.id = id
+	_newelClassesAndChildren el, args
+@newel = (tag, args...)-> #takes tagname, cssClasses*, childElements*; returns new html element
+	el = document.createElement tag
+	_newelClassesAndChildren el, args
+
+@getel = (ide)-> document.getElementById ide
+
+@clearEl = (el)->
+	while el.firstChild
+		el.removeChild el.firstChild
+
+# the shift by 0 fixes the sign on the high part
+# the final |0 converts the unsigned value into a signed value
 @imul = Math.imul or (a, b)->
 	ah = (a >>> 16) & 0xffff
 	al = a & 0xffff
 	bh = (b >>> 16) & 0xffff
 	bl = b & 0xffff
 	(al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0
+
+@lcghash = (v) -> (imul(v, 1664525) + 1013904223)|0
+#twist by 92 lcg hash
+@simpleTwistHash = (v)-> lcghash(92 + lcghash(v))
+
+@hsvcolor = (huw, saturation, value)->
+	hue = huw % 1
+	toRGB = (r, g, b)->
+		'rgb(' +
+		Math.floor(r * 255 + 0.5) + ',' +
+		Math.floor(g * 255 + 0.5) + ',' +
+		Math.floor(b * 255 + 0.5) + ')'
+	h = Math.floor hue*6
+	f = hue*6 - h
+	p = value*(1 - saturation)
+	q = value*(1 - f*saturation)
+	t = value*(1 - (1 - f)*saturation)
+	switch h
+		when 0 
+			toRGB(value, t, p)
+		when 1 
+			toRGB(q, value, p)
+		when 2 
+			toRGB(p, value, t)
+		when 3 
+			toRGB(p, q, value)
+		when 4 
+			toRGB(t, p, value)
+		when 5 
+			toRGB(value, p, q)
+		else
+			throw new Error("Cannot convert that HSV to RGB")
 
 @String::hashCode = ->
 	hash = 0
@@ -94,7 +151,7 @@ _copy = (obj, deep, seen, copies)->
 		copies.push ret
 	ret
 
-###*
+###
 Creates a clone of the passed object. This function can take just about
 any type of object and create a clone of it, including primitive values
 (which are not actually cloned because they are immutable).
@@ -116,11 +173,6 @@ will simply call that method and return the result.
 	_copy obj, deep, (if deep then [] else null), (if deep then [] else null)
 
 #end credit to emberjs
-
-# the shift by 0 fixes the sign on the high part
-# the final |0 converts the unsigned value into a signed value
-@lcgrng = (v) -> (imul(v, 22695477) + 1)|0
-
 
 #~ I used to use my own Promises. I guess I knew intellectually that es6 was coming but I could believe it in my heart. Now I am ready for the tomorrow.
 @Promise = window.Promise || ES6Promise.Promise
@@ -159,7 +211,7 @@ if not Promise then throw new Error "shiver.js will not work. Your browser is an
 	awaitRequest "POST", address, data
 @fetchJson = (address) -> #returns an Promise<json of response>.
 	awaitRequest "GET", address, null
-@getConnectedShivSock = (address, callback) -> #passes along a ShivSock
+@getConnectedShivSock = (address) -> #returns Promise<shivsockServer>
 	new Promise (g,b)->
 		WS = WebSocket or MozWebSocket
 		ws = new WS(address)

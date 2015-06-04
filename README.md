@@ -1,14 +1,14 @@
 #shivsock
 
-Shivsock is a symmetrical websocket subprotocol supplying entity addressing, RPC, and batching.
+Shivsock is a symmetrical websocket subprotocol supplying entity addressing, RPC(with error propagation), and batching.
 
-* **Remote Procedure Calls**. You can query an entity and any good shivsock API will immediately return an es6 Promise(or a shim) by which your code to immediately start to discuss the response that will come through it.
+* **Remote Procedure Calls**. You can query an entity and any good shivsock API will immediately return an es6 Promise(or a shim) containing the result.
 
 * **entity subaddressing**. All messages are addressed to a particular entity on the server from a particular entity on the client. These entities may operate in complete isolation, their communications will never interfere with any others.
 
-* **batching**. If multiple messages are sent from the client at the same time, they will be stuck together and sent in the same TCP packet a few milliseconds later to save bandwidth.
+* **batching**. If multiple messages are sent from the client at the same time, they will be packaged together and sent in the same TCP packet a few milliseconds later to save bandwidth. (configurable)
 
-I believe these features make an ideal basis for complex web applications.
+I believe these features make an great basis for complex web applications.
 
 ###Implementations
 
@@ -19,7 +19,7 @@ browser side | shiver.js
 
 ##why do we need another protocol?
 
-To be honest, I'm not entirely sure we do. I'm not aware of a good alternative, but, full disclosure, I could not be bothered researching every little feature of every mostly inferior existing protocol when I could just sit down, code it my way, and get exactly what I want with no bullshit. I'll update this section in the event that I'm ever able to articulate an unambiguous position of superiority.
+We probably don't. [WAMP](https://wamp.ws) is very good. It was simply easier for me to whip up something simple that did exactly what I wanted and nothing more(does WAMP really need pubsub to be a part of the protocol? Does it do batching? Will I ever run into scaling issues with the implementations?) than it was to figure out how to get existing java wamp implementations into a playframework actor system.
 
 ###spec
 Simple one way message: `{o:<payload>}`

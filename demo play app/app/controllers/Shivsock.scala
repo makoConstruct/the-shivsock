@@ -56,17 +56,17 @@ object Shivsock{
 	trait ShivsockEntity extends RequestActor{
 		//the following methods are to ensure and facilitate proper formatting of outgoing messages
 		//if the protocol gets any more complex I should probably use case classes internally
-		protected def failure(recipient:ClientAddress, message:String, respondingTo:Int) =
+		protected def failureTo(recipient:ClientAddress, message:String, respondingTo:Int) =
 			sendRaw(
 				recipient,
 				Json.obj("no"-> JsString(message), "rp"-> JsNumber(respondingTo), "to"-> JsString(recipient.entityName), "from"-> JsString(name))
 			)
-		protected def failure(recipient:ClientAddress, message:String) =
+		protected def failureTo(recipient:ClientAddress, message:String) =
 			sendRaw(
 				recipient,
 				Json.obj("no"-> JsString(message), "to"-> JsString(recipient.entityName), "from"-> JsString(name))
 			)
-		protected def message(recipient:ClientAddress, o:JsValue) =
+		protected def messageTo(recipient:ClientAddress, o:JsValue) =
 			sendRaw(
 				recipient,
 				if(recipient.entityName.length == 0)
@@ -80,7 +80,7 @@ object Shivsock{
 					else
 						Json.obj("o"-> o, "to"-> JsString(recipient.entityName), "from"-> JsString(name))
 			)
-		protected def response(recipient:ClientAddress, o:JsValue, rid:Int) =
+		protected def responseTo(recipient:ClientAddress, o:JsValue, rid:Int) =
 			sendRaw(
 				recipient,
 				if(recipient.entityName.length == 0)
@@ -94,7 +94,7 @@ object Shivsock{
 					else
 						Json.obj("o"-> o, "rp"-> JsNumber(rid), "to"-> JsString(recipient.entityName), "from"-> JsString(name))
 			)
-		protected def request(recipient:ClientAddress, o:JsValue, rid:Int) =
+		protected def requestTo(recipient:ClientAddress, o:JsValue, rid:Int) =
 			sendRaw(
 				recipient,
 				if(recipient.entityName.length == 0)
@@ -108,12 +108,12 @@ object Shivsock{
 					else
 						Json.obj("o"-> o, "rq"-> JsNumber(rid), "to"-> JsString(recipient.entityName), "from"-> JsString(name))
 			)
-		protected def iDoNotExist(recipient:ClientAddress) =
+		protected def iDoNotExistTo(recipient:ClientAddress) =
 			sendRaw(
 				recipient,
 				doesNotExist(recipient.entityName, name)
 			)
-		protected def iDoNotExist(recipient:ClientAddress, rid:Int) =
+		protected def iDoNotExistTo(recipient:ClientAddress, rid:Int) =
 			sendRaw(
 				recipient,
 				doesNotExist(rid, recipient.entityName, name)
@@ -126,7 +126,7 @@ object Shivsock{
 			val id = convid
 			convid += 1
 			pendingClientResponse(id) = pr
-			request(to, r, id)
+			requestTo(to, r, id)
 			pr.future
 		}
 		def ordinaryProcessing(o:JsObject, origin:ClientAddress){
@@ -134,16 +134,16 @@ object Shivsock{
 				case Some(id)=>
 					pendingClientResponse get id match{
 						case Some(pr)=> pr.success(o \ "o")
-						case None=> failure(origin, "I was not expecting that")
+						case None=> failureTo(origin, "I was not expecting that")
 					}
 				case None=>
 					(o \ "rq").asOpt[Int] match{
 						case Some(id)=>
 							takeShivsockQuery(o \ "o", origin) onComplete {
 								case Success(o) =>
-									response(origin, o, id)
+									responseTo(origin, o, id)
 								case Failure(e) =>
-									failure(origin, e.getMessage, id)
+									failureTo(origin, e.getMessage, id)
 							}
 						case None=>
 							takeShivsockStatement(o \ "o", origin)
